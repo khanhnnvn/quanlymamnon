@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { systemApi } from "@/lib/api";
 import { ApiError } from "@/lib/api-client";
+import { useSystemAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -12,6 +13,7 @@ import { InlineAlert } from "@/components/ui/Feedback";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { setUser } = useSystemAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,12 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await systemApi.login(email.trim(), password);
+      const user = await systemApi.login(email.trim(), password);
+      // systemApi.login() chỉ ghi token/user vào localStorage. SystemAuthProvider
+      // bọc cả /admin/login lẫn /admin/tenants trong cùng một layout nên KHÔNG
+      // remount khi điều hướng — phải tự cập nhật state của context ở đây,
+      // nếu không AdminShell vẫn thấy "chưa đăng nhập" và đá ngược về login.
+      setUser(user);
       router.push("/admin/tenants");
     } catch (err) {
       if (err instanceof ApiError) {
