@@ -166,17 +166,19 @@ Phân trang: query `?page=1&page_size=20`, response bọc thêm `"meta": {"page"
 | GET/POST | `/{slug}/school-years` | Admin/Vice | CRUD năm học |
 | PATCH | `/{slug}/school-years/:id` | Admin/Vice | — |
 | GET/POST | `/{slug}/grades` | Admin/Vice | CRUD khối |
-| GET/POST | `/{slug}/classes` | Admin/Vice (đọc: HeadTeacher/Teacher) | CRUD lớp + phân công GV |
+| GET/POST | `/{slug}/classes` | Admin/Vice (đọc: HeadTeacher/Teacher lớp mình) | CRUD lớp + phân công GV |
+| PATCH | `/{slug}/classes/:id` | Admin/Vice | Sửa tên/khối/sức chứa lớp |
 | POST | `/{slug}/classes/:id/teachers` | Admin/Vice | Gán giáo viên chính/phụ |
 | GET/POST | `/{slug}/students` | Admin/Vice/Teacher(lớp mình) | CRUD học sinh |
 | GET | `/{slug}/students/:id` | + Parent (con mình) | Chi tiết học sinh |
-| POST | `/{slug}/students/:id/parents` | Admin/Vice | Liên kết phụ huynh |
-| GET/POST | `/{slug}/users` | Admin/Vice | Quản lý người dùng (GV/nhân viên), gán vai trò |
-| GET/POST | `/{slug}/attendance` | Teacher/Assistant (lớp mình), Admin xem tất cả | Điểm danh theo `class_id` + `date` |
-| GET | `/{slug}/attendance/student/:id` | Teacher liên quan + Parent (con mình) | Lịch sử điểm danh 1 học sinh |
-| GET/POST | `/{slug}/journals` | Teacher/Assistant (lớp mình) | Nhật ký lớp |
-| GET | `/{slug}/journals/student/:id` | Parent (con mình) + GV liên quan | Nhật ký theo học sinh |
-| GET/POST | `/{slug}/announcements` | Admin/Vice (trường), Teacher (lớp mình) | Thông báo |
+| PATCH | `/{slug}/students/:id` | Admin/Vice/Teacher(lớp mình hiện tại) | Sửa hồ sơ học sinh |
+| POST | `/{slug}/students/:id/parents` | Admin/Vice | Liên kết phụ huynh với học sinh — nhận `parent_user_id` của một tài khoản **đã tồn tại** (role `PARENT`); không tự tạo tài khoản. Để thêm phụ huynh mới: gọi `POST /{slug}/users` với `role_codes: ["PARENT"]` trước, rồi lấy `id` trả về gọi endpoint này. |
+| GET/POST | `/{slug}/users` | Admin/Vice | Quản lý người dùng (GV/nhân viên/phụ huynh), gán vai trò qua `role_codes` |
+| GET/POST | `/{slug}/attendance` | Teacher/Assistant (lớp mình), Admin xem tất cả | Điểm danh theo `class_id` + `date`. `POST` là **upsert** theo khóa duy nhất `(tenant_id, student_id, date)` — gọi lại `POST` với cùng học sinh/ngày để sửa trạng thái, không có route `PATCH` riêng. |
+| GET | `/{slug}/attendance/student/:id` | Teacher liên quan + Parent (con mình) + Admin/Vice | Lịch sử điểm danh 1 học sinh |
+| GET/POST | `/{slug}/journals` | Teacher/Assistant (lớp mình, ghi); + Admin/Vice (đọc, giám sát toàn trường) | Nhật ký lớp |
+| GET | `/{slug}/journals/student/:id` | Parent (con mình) + GV liên quan + Admin/Vice | Nhật ký theo học sinh |
+| GET/POST | `/{slug}/announcements` | Admin/Vice (đọc+ghi mọi phạm vi); Teacher/Assistant (đọc trường+khối+lớp mình, ghi lớp mình); Parent (chỉ đọc: trường + khối/lớp của con) | Thông báo |
 | GET | `/{slug}/dashboard/summary` | tất cả (nội dung khác nhau theo role) | Số liệu tổng quan theo vai trò |
 
 Toàn bộ handler ghi (`POST/PATCH/DELETE`) trên `students`, `attendance`, `journals`, `users` phải ghi 1 dòng vào `audit_logs`.
